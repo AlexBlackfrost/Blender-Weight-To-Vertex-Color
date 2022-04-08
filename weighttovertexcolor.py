@@ -73,7 +73,7 @@ class VertexColorToWeight(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Convert active vertex color layer to weights"
 
-    channel : EnumProperty (name="Channel", description="Channel to use as weight", items=[('R','Red','Red'),('G','Green','Green'),('B','Blue','Blue'),('M','All (Monochrome)','All (Monochrome)')])
+    channel : EnumProperty (name="Channel", description="Channel to use as weight", items=[('R','Red','Red'),('G','Green','Green'),('B','Blue','Blue'),('A','Alpha','Alpha'),('M','All (Monochrome)','All (Monochrome)')])
 
     @classmethod
     def poll(self, context):
@@ -125,6 +125,9 @@ class VertexColorToWeight(bpy.types.Operator):
         elif self.channel == 'B':
             for vindex in colors:           
                 vertex_group.add([vindex], colors[vindex].z/corners[vindex], 'REPLACE')
+        elif self.channel == 'A':
+            for vindex in colors:           
+                vertex_group.add([vindex], colors[vindex].w/corners[vindex], 'REPLACE')
         else:
             for vindex in colors:           
                 vertex_group.add([vindex], sum(colors[vindex]/corners[vindex])/3.0, 'REPLACE')
@@ -145,7 +148,7 @@ class WeightToVertexColor(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Convert active vertex group to colors"
 
-    channel : EnumProperty (name="Channel", description="Channel to transfer weight to", items=[('R','Red','Red'),('G','Green','Green'),('B','Blue','Blue'),('M','All (Monochrome)','All (Monochrome)')])
+    channel : EnumProperty (name="Channel", description="Channel to transfer weight to", items=[('R','Red','Red'),('G','Green','Green'),('B','Blue','Blue'),('A','Alpha','Alpha'),('M','All (Monochrome)','All (Monochrome)')])
 
     @classmethod
     def poll(self, context):
@@ -182,12 +185,19 @@ class WeightToVertexColor(bpy.types.Operator):
                 weight = vertex_group.weight(loop.vertex_index)
             except RuntimeError:
                 weight = 0  # missing index
+            r = vertex_colors[loop.index].color[0]
+            g = vertex_colors[loop.index].color[1]
+            b = vertex_colors[loop.index].color[2]
+            a = vertex_colors[loop.index].color[3]
+
             if self.channel == 'R':
                 vertex_colors[loop.index].color = (weight, 0, 0, 1)
             elif self.channel == 'G':
                 vertex_colors[loop.index].color = (0, weight, 0, 1)
             elif self.channel == 'B':
                 vertex_colors[loop.index].color = (0, 0, weight, 1)
+            elif self.channel == 'A':
+                vertex_colors[loop.index].color = (r, g, b, weight)                
             else:
                 vertex_colors[loop.index].color = (weight, weight, weight, 1)
 
